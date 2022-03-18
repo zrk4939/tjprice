@@ -5,7 +5,6 @@ import tkinter
 
 import pytesseract  # Текстовый пакет распознавания изображений
 from PIL import ImageGrab, Image
-from numpy.core.defchararray import isnumeric
 
 pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
 # pytesseract.pytesseract.tesseract_cmd = r'Tesseract-OCR\tesseract.exe'
