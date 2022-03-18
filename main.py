@@ -6,7 +6,7 @@ import tkinter
 
 import pyperclip
 import pytesseract  # Текстовый пакет распознавания изображений
-from PIL import ImageGrab, Image
+from PIL import ImageGrab, Image, ImageEnhance
 from pynput.mouse import Listener
 
 pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
@@ -17,7 +17,7 @@ tessdata_dir_config = r'--tessdata-dir "Tesseract-OCR"'
 x1 = 620
 x2 = 670
 y1 = 765
-y2 = 793
+y2 = 790
 coordinate = [x1, y1, x2, y2]
 
 
@@ -39,24 +39,36 @@ def screenAndCalc(sleep_time=0.0):
     dir_path = os.path.abspath(os.path.dirname(file_))
     file_path = dir_path + '\\read.jpg'
 
+    modifier = 10
+
     # Захват изображения координат
     pic = ImageGrab.grab(coordinate)
-    pic.save(file_path)
+    pic = pic.resize((pic.size[0] * modifier, pic.size[1] * modifier))
+    # pic = pic.convert("L") # convert image to black and white
+    bwFilter = ImageEnhance.Color(pic)
+    pic = bwFilter.enhance(0)
+    contrastFilter = ImageEnhance.Contrast(pic)
+    pic = contrastFilter.enhance(3)
+    sharpnessFilter = ImageEnhance.Sharpness(pic)
+    pic = sharpnessFilter.enhance(50)
+    # pic.save(file_path)
 
-    # text = pytesseract.image_to_string(Image.open(file_path), config='--psm 7')
-    text = pytesseract.image_to_string(Image.open(file_path), lang='eng',
-                                       config='--psm 13 --oem 3 -c tessedit_char_whitelist=0123456789')
+    # text = pytesseract.image_to_string(Image.open(file_path), config='--psm 13 digits')
+    text = pytesseract.image_to_string(pic, lang='eng', config='--psm 13 --oem 3 -c tessedit_char_whitelist=0123456789')
     # pyperclip.copy(text.replace(' ', ''))  # Импортировать содержимое распознавания в системный буфер обмена
     # print(text)
     if text:
         labelRead.config(text="FOUND: " + text.strip('\n'), pady=0, bg='white')
         result50 = float(text) * 0.5
-        price50btn.config(text="50% - " + str(int(result50)), command=lambda: copyBuyPrice(result50))
         result55 = float(text) * 0.55
-        price55btn.config(text="55% - " + str(int(result55)), command=lambda: copyBuyPrice(result55))
         result60 = float(text) * 0.6
-        price60btn.config(text="60% - " + str(int(result60)), command=lambda: copyBuyPrice(result60))
         result65 = float(text) * 0.65
+
+        copyBuyPrice(result65)  # СРАЗУ помещаем в буфер 65%
+
+        price50btn.config(text="50% - " + str(int(result50)), command=lambda: copyBuyPrice(result50))
+        price55btn.config(text="55% - " + str(int(result55)), command=lambda: copyBuyPrice(result55))
+        price60btn.config(text="60% - " + str(int(result60)), command=lambda: copyBuyPrice(result60))
         price65btn.config(text="65% - " + str(int(result65)), command=lambda: copyBuyPrice(result65))
     else:
         labelRead.config(text="NOT FOUND", pady=0, bg="red")
@@ -64,6 +76,8 @@ def screenAndCalc(sleep_time=0.0):
         price55btn.config(text="55%", command='')
         price60btn.config(text="60%", command='')
         price65btn.config(text="65%", command='')
+
+        pyperclip.copy('')  # очистить буфер
 
 
 def copyBuyPrice(value):
