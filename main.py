@@ -2,10 +2,13 @@
 import inspect
 import os
 import tkinter
+
 import pytesseract  # Текстовый пакет распознавания изображений
 from PIL import ImageGrab, Image
 
 pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
+# pytesseract.pytesseract.tesseract_cmd = r'Tesseract-OCR\tesseract.exe'
+tessdata_dir_config = r'--tessdata-dir "Tesseract-OCR"'
 
 # Создаем список координат
 x1 = 564
@@ -13,14 +16,6 @@ x2 = 725
 y1 = 762
 y2 = 792
 coordinate = [x1, y1, x2, y2]
-
-
-def on_click(x, y, button, pressed):
-    if pressed:
-        print("Mouse clicked. \n x=" + str(x) + "\n y=" + str(y))
-
-    if pressed and x1 < x < x2 and y1 < y < y2:
-        screenAndCalc()
 
 
 def screenAndCalc():
@@ -32,6 +27,7 @@ def screenAndCalc():
     # Захват изображения координат
     pic = ImageGrab.grab(coordinate)
     pic.save(file_path)
+
     text = pytesseract.image_to_string(Image.open(file_path))  # Определить и вернуть
     # pyperclip.copy(text.replace(' ', ''))  # Импортировать содержимое распознавания в системный буфер обмена
     # print(text)
@@ -46,11 +42,7 @@ def screenAndCalc():
 
 # creating the tkinter window
 root = tkinter.Tk()
-# Main_window.attributes('-alpha', 0.3)
-# root.overrideredirect(True)
 root.attributes("-topmost", True)
-# root.wm_attributes("-transparent", True)
-# root.config(bg='')
 
 root.geometry("75x92+705+662")
 
