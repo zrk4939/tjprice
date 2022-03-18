@@ -5,16 +5,17 @@ import tkinter
 
 import pytesseract  # Текстовый пакет распознавания изображений
 from PIL import ImageGrab, Image
+from numpy.core.defchararray import isnumeric
 
 pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
 # pytesseract.pytesseract.tesseract_cmd = r'Tesseract-OCR\tesseract.exe'
 tessdata_dir_config = r'--tessdata-dir "Tesseract-OCR"'
 
 # Создаем список координат
-x1 = 564
-x2 = 725
-y1 = 762
-y2 = 792
+x1 = 620
+x2 = 670
+y1 = 765
+y2 = 793
 coordinate = [x1, y1, x2, y2]
 
 
@@ -28,9 +29,11 @@ def screenAndCalc():
     pic = ImageGrab.grab(coordinate)
     pic.save(file_path)
 
-    text = pytesseract.image_to_string(Image.open(file_path))  # Определить и вернуть
+    # text = pytesseract.image_to_string(Image.open(file_path), config='--psm 7')
+    text = pytesseract.image_to_string(Image.open(file_path), lang='eng', config='--psm 13 --oem 3 -c tessedit_char_whitelist=0123456789')
     # pyperclip.copy(text.replace(' ', ''))  # Импортировать содержимое распознавания в системный буфер обмена
     # print(text)
+    labelRead.config(text="FOUND: " + text.strip('\n'), pady=0)
     if text:
         result50 = float(text) * 0.5
         label50.config(text="50% - " + str(int(result50)))
@@ -44,11 +47,13 @@ def screenAndCalc():
 root = tkinter.Tk()
 root.attributes("-topmost", True)
 
-root.geometry("75x92+705+662")
+root.geometry("75x102+705+652")
 
+labelRead = tkinter.Label(root, text='FOUND', pady=0)
 label50 = tkinter.Label(root, text='50%')
 label55 = tkinter.Label(root, text='55%')
 label60 = tkinter.Label(root, text='60%')
+labelRead.pack()
 label50.pack()
 label55.pack()
 label60.pack()
