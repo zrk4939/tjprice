@@ -3,10 +3,11 @@ import inspect
 import os
 import time
 import tkinter
+from threading import Timer
 
 import pyperclip
 import pytesseract  # Текстовый пакет распознавания изображений
-from PIL import ImageGrab, Image, ImageEnhance
+from PIL import ImageGrab, ImageEnhance
 from pynput.mouse import Listener
 
 pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
@@ -29,7 +30,8 @@ def on_click(x, y, button, pressed):
 
     if pressed and work_zone[0] < x < work_zone[2] and work_zone[1] < y < work_zone[3]:
         # print('work_zone!')
-        screenAndCalc(0.7)
+        t = Timer(0.2, screenAndCalc)
+        t.start()
 
 
 def screenAndCalc(sleep_time=0.0):
@@ -53,8 +55,7 @@ def screenAndCalc(sleep_time=0.0):
     pic = sharpnessFilter.enhance(50)
     # pic.save(file_path)
 
-    # text = pytesseract.image_to_string(Image.open(file_path), config='--psm 13 digits')
-    text = pytesseract.image_to_string(pic, lang='eng', config='--psm 13 --oem 3 -c tessedit_char_whitelist=0123456789')
+    text = recognize(pic)
     # pyperclip.copy(text.replace(' ', ''))  # Импортировать содержимое распознавания в системный буфер обмена
     # print(text)
     if text:
@@ -78,6 +79,19 @@ def screenAndCalc(sleep_time=0.0):
         price65btn.config(text="65%", command='')
 
         pyperclip.copy('')  # очистить буфер
+
+
+def recognize(pic):
+    value = pytesseract.image_to_string(pic, lang='eng',
+                                        config='--psm 13 --oem 3 -c tessedit_char_whitelist=0123456789')
+
+    if not value or (int(value) <= 10):
+        value = pytesseract.image_to_string(pic, config='--psm 11 digits')
+
+    if int(value) > 10:
+        return value
+    else:
+        return ''
 
 
 def copyBuyPrice(value):
