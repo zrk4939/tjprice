@@ -14,19 +14,15 @@ pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesse
 # pytesseract.pytesseract.tesseract_cmd = r'Tesseract-OCR\tesseract.exe'
 tessdata_dir_config = r'--tessdata-dir "Tesseract-OCR"'
 
-# Создаем список координат
-x1 = 620
-x2 = 670
-y1 = 765
-y2 = 790
-coordinate = [x1, y1, x2, y2]
-
 
 def on_click(x, y, button, pressed):
     # if pressed:
     #     print("Mouse clicked. \n x=" + str(x) + "\n y=" + str(y))
 
-    work_zone = [342, 300, 442, 855]
+    # Создаем список координат (исходник 1920x1080)
+    wz_tl = res_conv(342, 300, (1920, 1080), active_resolution)  # work_zone top-left
+    wz_rb = res_conv(442, 855, (1920, 1080), active_resolution)  # work_zone right-bottom
+    work_zone = [wz_tl[0], wz_tl[1], wz_rb[0], wz_rb[1]]  # [x1, y1, x2, y2]
 
     if pressed and work_zone[0] < x < work_zone[2] and work_zone[1] < y < work_zone[3]:
         # print('work_zone!')
@@ -36,15 +32,16 @@ def on_click(x, y, button, pressed):
 
 def screenAndCalc(sleep_time=0.0):
     time.sleep(sleep_time)
-    # Получить текущий путь к файлу
-    file_ = inspect.getfile(inspect.currentframe())
-    dir_path = os.path.abspath(os.path.dirname(file_))
-    file_path = dir_path + '\\read.jpg'
 
     modifier = 10
 
+    # Создаем список координат (исходник 1920x1080)
+    coordinate_tl = res_conv(620, 765, (1920, 1080), active_resolution)  # coordinate top-left
+    coordinate_rb = res_conv(670, 790, (1920, 1080), active_resolution)  # coordinate right-bottom
+    coordinates = [coordinate_tl[0], coordinate_tl[1], coordinate_rb[0], coordinate_rb[1]]  # [x1, y1, x2, y2]
+
     # Захват изображения координат
-    pic = ImageGrab.grab(coordinate)
+    pic = ImageGrab.grab(coordinates)
     pic = pic.resize((pic.size[0] * modifier, pic.size[1] * modifier))
     # pic = pic.convert("L") # convert image to black and white
     bwFilter = ImageEnhance.Color(pic)
@@ -53,6 +50,11 @@ def screenAndCalc(sleep_time=0.0):
     pic = contrastFilter.enhance(3)
     sharpnessFilter = ImageEnhance.Sharpness(pic)
     pic = sharpnessFilter.enhance(50)
+
+    # Получить текущий путь к файлу
+    # file_ = inspect.getfile(inspect.currentframe())
+    # dir_path = os.path.abspath(os.path.dirname(file_))
+    # file_path = dir_path + '\\read.jpg'
     # pic.save(file_path)
 
     text = recognize(pic)
@@ -82,16 +84,25 @@ def screenAndCalc(sleep_time=0.0):
 
 
 def recognize(pic):
-    value = pytesseract.image_to_string(pic, lang='eng',
-                                        config='--psm 13 --oem 3 -c tessedit_char_whitelist=0123456789')
+    try:
+        value = pytesseract.image_to_string(pic, lang='eng',
+                                            config='--psm 13 --oem 3 -c tessedit_char_whitelist=0123456789')
+        if not value or (int(value) <= 10):
+            value = pytesseract.image_to_string(pic, config='--psm 11 digits')
 
-    if not value or (int(value) <= 10):
-        value = pytesseract.image_to_string(pic, config='--psm 11 digits')
-
-    if int(value) > 10:
-        return value
-    else:
+        if int(value) > 10:
+            return value
+        else:
+            return ''
+    except:
         return ''
+
+
+def res_conv(x: int, y: int, resolution_from: tuple, resolution_to: tuple) -> tuple:
+    assert x < resolution_from[0] and y < resolution_from[1], "Input coordinate is larger than resolution"
+    x_ratio = resolution_to[0] / resolution_from[0]  # ratio to multiply x co-ord
+    y_ratio = resolution_to[1] / resolution_from[1]  # ratio to multiply y co-ord
+    return int(x * x_ratio), int(y * y_ratio)
 
 
 def copyBuyPrice(value):
@@ -108,7 +119,13 @@ if __name__ == '__main__':
         root = tkinter.Tk()
         root.attributes("-topmost", True)
 
-        root.geometry("75x152+705+602")
+        # active_resolution = (GetSystemMetrics(0), GetSystemMetrics(1))
+        active_resolution = (root.winfo_screenwidth(), root.winfo_screenheight())
+
+        # Создаем список координат (исходник 1920x1080)
+        geometry_tl = res_conv(705, 602, (1920, 1080), active_resolution)  # top-left
+        # root.geometry("75x152+705+602")
+        root.geometry("75x152+" + str(geometry_tl[0]) + "+" + str(geometry_tl[1]))
 
         labelRead = tkinter.Label(root, text='FOUND', pady=0, bg='white')
         price50btn = tkinter.Button(root, text='50%')
